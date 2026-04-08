@@ -1,0 +1,14 @@
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.csproj.AssemblyReference.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.AssemblyInfoInputs.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.AssemblyInfo.cs
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.csproj.CoreCompileInputs.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.deps.json
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.runtimeconfig.json
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.pdb
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\refint\BLEMeshMonitoring.DataAccess.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.pdb
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\BLEMeshMonitoring.DataAccess.genruntimeconfig.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.DataAccess\obj\Debug\net8.0\ref\BLEMeshMonitoring.DataAccess.dll

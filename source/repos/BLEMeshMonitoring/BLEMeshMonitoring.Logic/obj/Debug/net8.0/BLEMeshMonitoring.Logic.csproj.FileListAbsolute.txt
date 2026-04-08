@@ -1,0 +1,15 @@
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.AssemblyInfoInputs.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.AssemblyInfo.cs
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.csproj.CoreCompileInputs.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\bin\Debug\net8.0\BLEMeshMonitoring.Logic.deps.json
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\bin\Debug\net8.0\BLEMeshMonitoring.Logic.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\bin\Debug\net8.0\BLEMeshMonitoring.Logic.pdb
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\bin\Debug\net8.0\BLEMeshMonitoring.DataAccess.pdb
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.csproj.AssemblyReference.cache
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshM.88DB61DA.Up2Date
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\refint\BLEMeshMonitoring.Logic.dll
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\BLEMeshMonitoring.Logic.pdb
+C:\Users\CAOTRỌNGPHƯỚC\source\repos\BLEMeshMonitoring\BLEMeshMonitoring.Logic\obj\Debug\net8.0\ref\BLEMeshMonitoring.Logic.dll
