@@ -106,15 +106,15 @@ static void mqtt_init(void)
     esp_mqtt_client_start(mqtt_client);
 }
 
-static void publish_sensor_to_mqtt(int node_id, float temp, float hum, float co2)
+static void publish_sensor_to_mqtt(int node_id, float temp, float hum, float co2, float mcu_temp, float volt)
 {
     if (!mqtt_connected) return;
     char topic[64], json[256];
     float aqi = co2 < 700 ? co2 / 10.0f : 50.0f + (co2 - 700) / 20.0f;
     snprintf(topic, sizeof(topic), "ble/node/%d/sensor", node_id);
     snprintf(json, sizeof(json),
-             "{\"node\":%d,\"temp\":%.2f,\"hum\":%.2f,\"mcu_temp\":0.00,\"volt\":0.00,\"voc\":%.2f,\"aqi\":%.2f}",
-             node_id, temp, hum, co2, aqi);
+             "{\"node\":%d,\"temp\":%.2f,\"hum\":%.2f,\"mcu_temp\":%.2f,\"volt\":%.2f,\"voc\":%.2f,\"aqi\":%.2f}",
+             node_id, temp, hum, mcu_temp, volt, co2, aqi);
     esp_mqtt_client_publish(mqtt_client, topic, json, 0, 1, 0);
     ESP_LOGI(TAG, "MQTT [%s]: %s", topic, json);
 }
@@ -123,37 +123,41 @@ static void parse_sensor_status(uint8_t *data, uint16_t len, uint16_t src_addr)
 {
     if (!data || len < 3) return;
 
-    float temp = 0, hum = 0, co2 = 0;
+    float temp = 0, hum = 0, co2 = 0, mcu_temp = 0, volt = 0;
     int node_id = 1;
 
     for (int i = 0; i < provisioned_count; i++) {
         if (provisioned_addr[i] == src_addr) { node_id = i + 1; break; }
     }
 
-    // Parse theo vị trí cố định từ raw data
-    // Format: [MPID_temp 2B][temp_data 2B][MPID_hum 2B][hum_data 2B][MPID_co2 2B][co2_data 2B]
-    // Total = 12 bytes
+    // Parse theo vị trí: mỗi sensor = 2 byte MPID + 2 byte data = 4 byte
+    // 5 sensors × 4 bytes = 20 bytes total
+    int pos = 0;
+    int sensor_idx = 0;
 
-    if (len >= 12) {
-        // Temp: byte 2-3 (little endian)
-        uint16_t temp_raw = data[2] | (data[3] << 8);
-        temp = (temp_raw / 100.0f) - 64.0f;
+    while (pos + 4 <= len) {
+        uint16_t mpid = data[pos] | (data[pos + 1] << 8);
+        uint16_t prop_id = (mpid >> 5) & 0x07FF;
+        uint16_t raw = data[pos + 2] | (data[pos + 3] << 8);
 
-        // Hum: byte 6-7 (little endian)
-        uint16_t hum_raw = data[6] | (data[7] << 8);
-        hum = hum_raw / 100.0f;
+        if (prop_id == SENSOR_TEMP_PROPERTY_ID) {
+            temp = (raw / 100.0f) - 64.0f;
+        } else if (prop_id == SENSOR_HUM_PROPERTY_ID) {
+            hum = raw / 100.0f;
+        } else if (prop_id == SENSOR_CO2_PROPERTY_ID) {
+            co2 = (float)raw;
+        } else if (prop_id == 0x0069) {
+            mcu_temp = raw / 100.0f;
+        } else if (prop_id == 0x006A) {
+            volt = raw / 1000.0f;
+        }
 
-        // CO2: byte 10-11 (little endian)
-        uint16_t co2_raw = data[10] | (data[11] << 8);
-        co2 = (float)co2_raw;
+        pos += 4;
     }
-    else if (len >= 4) {
-        uint16_t temp_raw = data[2] | (data[3] << 8);
-        temp = (temp_raw / 100.0f) - 64.0f;
-    }
 
-    ESP_LOGI(TAG, "Node %d: Temp=%.2f Hum=%.2f CO2=%.2f", node_id, temp, hum, co2);
-    publish_sensor_to_mqtt(node_id, temp, hum, co2);
+    ESP_LOGI(TAG, "Node %d: T=%.2f H=%.2f CO2=%.2f MCU=%.2f V=%.2f",
+             node_id, temp, hum, co2, mcu_temp, volt);
+    publish_sensor_to_mqtt(node_id, temp, hum, co2, mcu_temp, volt);
 }
 
 // ==================== BLE MESH MODELS ====================
