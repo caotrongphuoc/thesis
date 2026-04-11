@@ -98,14 +98,18 @@ namespace BLEMeshMonitoring.App.Forms
                 int nodeId = root.GetProperty("node").GetInt32();
                 float temp = (float)root.GetProperty("temp").GetDouble();
                 float hum = (float)root.GetProperty("hum").GetDouble();
-                float mcuTemp = root.TryGetProperty("mcu_temp", out var mt) ? (float)mt.GetDouble() : sensorData[nodeId - 1][4];
-                float volt = root.TryGetProperty("volt", out var vt) ? (float)vt.GetDouble() : sensorData[nodeId - 1][5];
+                float mcuTemp = root.TryGetProperty("mcu_temp", out var mt) ? (float)mt.GetDouble() : 0;
+                float volt = root.TryGetProperty("volt", out var vt) ? (float)vt.GetDouble() : 0;
+                float voc = root.TryGetProperty("voc", out var vc) ? (float)vc.GetDouble() : 0;
+                float aqi = root.TryGetProperty("aqi", out var aq) ? (float)aq.GetDouble() : 0;
 
                 int idx = nodeId - 1;
                 if (idx < 0 || idx >= 4) return;
 
                 sensorData[idx][0] = temp;
                 sensorData[idx][1] = hum;
+                sensorData[idx][2] = voc;
+                sensorData[idx][3] = aqi;
                 sensorData[idx][4] = mcuTemp;
                 sensorData[idx][5] = volt;
                 deviceData[idx][3] = $"{mcuTemp:F2}";
