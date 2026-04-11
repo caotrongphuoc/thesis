@@ -1,4 +1,4 @@
-void app_main() {}#include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
@@ -50,7 +50,7 @@ static esp_ble_mesh_sensor_state_t sensor_states[SENSOR_COUNT] = {
         },
         .sensor_data = {
             .format    = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
-            .length    = 1,
+            .length    = 2,
             .raw_value = &sensor_data_temp,
         },
     },
@@ -147,7 +147,7 @@ static esp_ble_mesh_prov_t provision = {
     .uuid = dev_uuid,
 };
 
-#define SENSOR_STATUS_BUF_LEN   12
+#define SENSOR_STATUS_BUF_LEN   16
 
 static uint16_t build_sensor_status(uint8_t *buf, uint16_t buf_len)
 {
@@ -176,23 +176,26 @@ static void update_sensor_values(void)
     float co2 = get_co2_ppm();
     float mcu = get_mcu_temp();
 
-    uint8_t  temp_raw = (uint8_t)((t + 64.0f) * 2.0f);
-    uint8_t  hum_raw  = (uint8_t)h;
+    // Encode temp: nhân 100 để giữ 2 số thập phân, dùng 2 bytes
+    uint16_t temp_raw = (uint16_t)((t + 64.0f) * 100.0f);
+    // Encode hum: nhân 100, dùng 2 bytes
+    uint16_t hum_raw  = (uint16_t)(h * 100.0f);
+    // CO2: giữ nguyên uint16
     uint16_t co2_raw  = (uint16_t)co2;
 
     net_buf_simple_reset(&sensor_data_temp);
-    net_buf_simple_add_u8(&sensor_data_temp, temp_raw);
+    net_buf_simple_add_le16(&sensor_data_temp, temp_raw);
 
     net_buf_simple_reset(&sensor_data_hum);
-    net_buf_simple_add_u8(&sensor_data_hum, hum_raw);
+    net_buf_simple_add_le16(&sensor_data_hum, hum_raw);
 
     net_buf_simple_reset(&sensor_data_co2);
     net_buf_simple_add_le16(&sensor_data_co2, co2_raw);
 
     ESP_LOGI(TAG, "========================================");
-    ESP_LOGI(TAG, "  Temp      : %.2f C", t);
-    ESP_LOGI(TAG, "  Humidity  : %.2f %%", h);
-    ESP_LOGI(TAG, "  CO2/VOC   : %.2f ppm", co2);
+    ESP_LOGI(TAG, "  Temp      : %.2f C (raw=%d)", t, temp_raw);
+    ESP_LOGI(TAG, "  Humidity  : %.2f %% (raw=%d)", h, hum_raw);
+    ESP_LOGI(TAG, "  CO2/VOC   : %.2f ppm (raw=%d)", co2, co2_raw);
     ESP_LOGI(TAG, "  MCU Temp  : %.2f C", mcu);
     ESP_LOGI(TAG, "========================================");
 }
@@ -231,6 +234,12 @@ static void prov_complete(uint16_t net_idx, uint16_t addr, uint8_t flags, uint32
 {
     ESP_LOGI(TAG, "Provisioning complete! Addr: 0x%04x", addr);
     update_sensor_values();
+
+    // Set publication address to group 0xC000
+    sensor_pub.publish_addr = 0xC000;
+    sensor_pub.app_idx = 0x0000;
+    sensor_pub.ttl = 7;
+    sensor_pub.period = 0;
 }
 
 static void mesh_prov_cb(esp_ble_mesh_prov_cb_event_t event,
