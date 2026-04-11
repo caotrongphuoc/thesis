@@ -113,47 +113,43 @@ static void publish_sensor_to_mqtt(int node_id, float temp, float hum, float co2
     float aqi = co2 < 700 ? co2 / 10.0f : 50.0f + (co2 - 700) / 20.0f;
     snprintf(topic, sizeof(topic), "ble/node/%d/sensor", node_id);
     snprintf(json, sizeof(json),
-             "{\"node\":%d,\"temp\":%.2f,\"hum\":%.2f,\"voc\":%.2f,\"aqi\":%.2f}",
+             "{\"node\":%d,\"temp\":%.2f,\"hum\":%.2f,\"mcu_temp\":0.00,\"volt\":0.00,\"voc\":%.2f,\"aqi\":%.2f}",
              node_id, temp, hum, co2, aqi);
     esp_mqtt_client_publish(mqtt_client, topic, json, 0, 1, 0);
     ESP_LOGI(TAG, "MQTT [%s]: %s", topic, json);
 }
 
-// ==================== PARSE SENSOR STATUS ====================
 static void parse_sensor_status(uint8_t *data, uint16_t len, uint16_t src_addr)
 {
     if (!data || len < 3) return;
 
     float temp = 0, hum = 0, co2 = 0;
-    uint16_t offset = 0;
     int node_id = 1;
 
     for (int i = 0; i < provisioned_count; i++) {
         if (provisioned_addr[i] == src_addr) { node_id = i + 1; break; }
     }
 
-    while (offset < len) {
-        if (offset + 2 > len) break;
-        uint16_t mpid = data[offset] | (data[offset + 1] << 8);
-        offset += 2;
+    // Parse theo vị trí cố định từ raw data
+    // Format: [MPID_temp 2B][temp_data 2B][MPID_hum 2B][hum_data 2B][MPID_co2 2B][co2_data 2B]
+    // Total = 12 bytes
 
-        uint8_t data_len = ((mpid >> 1) & 0x0F) + 1;
-        uint16_t prop_id = (mpid >> 5) & 0x07FF;
+    if (len >= 12) {
+        // Temp: byte 2-3 (little endian)
+        uint16_t temp_raw = data[2] | (data[3] << 8);
+        temp = (temp_raw / 100.0f) - 64.0f;
 
-        if (offset + data_len > len) break;
+        // Hum: byte 6-7 (little endian)
+        uint16_t hum_raw = data[6] | (data[7] << 8);
+        hum = hum_raw / 100.0f;
 
-        switch (prop_id) {
-            case SENSOR_TEMP_PROPERTY_ID:
-                if (data_len >= 1) temp = (data[offset] / 2.0f) - 64.0f;
-                break;
-            case SENSOR_HUM_PROPERTY_ID:
-                if (data_len >= 1) hum = (float)data[offset];
-                break;
-            case SENSOR_CO2_PROPERTY_ID:
-                if (data_len >= 2) co2 = (float)(data[offset] | (data[offset + 1] << 8));
-                break;
-        }
-        offset += data_len;
+        // CO2: byte 10-11 (little endian)
+        uint16_t co2_raw = data[10] | (data[11] << 8);
+        co2 = (float)co2_raw;
+    }
+    else if (len >= 4) {
+        uint16_t temp_raw = data[2] | (data[3] << 8);
+        temp = (temp_raw / 100.0f) - 64.0f;
     }
 
     ESP_LOGI(TAG, "Node %d: Temp=%.2f Hum=%.2f CO2=%.2f", node_id, temp, hum, co2);
@@ -192,6 +188,8 @@ static esp_ble_mesh_comp_t composition = {
 
 static esp_ble_mesh_prov_t provision = {
     .uuid = dev_uuid,
+    .prov_unicast_addr = 0x0001,
+    .prov_start_address = 0x0005,
 };
 
 // ==================== CONFIGURE NODE ====================
@@ -237,6 +235,30 @@ static void bind_sensor_model(uint16_t addr)
 
     esp_ble_mesh_config_client_set_state(&common, &set);
     ESP_LOGI(TAG, "Binding Sensor Model on node 0x%04x", addr);
+}
+
+static void set_node_publication(uint16_t addr)
+{
+    esp_ble_mesh_client_common_param_t common = {0};
+    common.opcode = ESP_BLE_MESH_MODEL_OP_MODEL_PUB_SET;
+    common.model = &root_models[1];
+    common.ctx.net_idx = net_key_idx;
+    common.ctx.app_idx = 0xFFFF;
+    common.ctx.addr = addr;
+    common.ctx.send_ttl = 7;
+    common.msg_timeout = 5000;
+
+    esp_ble_mesh_cfg_client_set_state_t set = {0};
+    set.model_pub_set.element_addr = addr;
+    set.model_pub_set.publish_addr = 0xC000;
+    set.model_pub_set.publish_app_idx = app_key_idx;
+    set.model_pub_set.publish_ttl = 7;
+    set.model_pub_set.publish_period = 0x45;  // 5 seconds
+    set.model_pub_set.model_id = ESP_BLE_MESH_MODEL_ID_SENSOR_SRV;
+    set.model_pub_set.company_id = 0xFFFF;
+
+    esp_ble_mesh_config_client_set_state(&common, &set);
+    ESP_LOGI(TAG, "Setting publication for node 0x%04x to group 0xC000", addr);
 }
 
 // ==================== PROVISIONER CALLBACK ====================
@@ -291,6 +313,7 @@ static void mesh_config_client_cb(esp_ble_mesh_cfg_client_cb_event_t event,
         }
         else if (param->params->opcode == ESP_BLE_MESH_MODEL_OP_MODEL_APP_BIND) {
             ESP_LOGI(TAG, "Sensor Model bound on node 0x%04x", param->params->ctx.addr);
+            set_node_publication(param->params->ctx.addr);
         }
     }
 }
@@ -364,7 +387,12 @@ static esp_err_t ble_mesh_init(void)
     esp_ble_mesh_register_config_server_callback(mesh_config_server_cb);
     esp_ble_mesh_register_sensor_client_callback(mesh_sensor_client_cb);
 
+    provision.prov_start_address = 0x0005;
+
     ESP_ERROR_CHECK(esp_ble_mesh_init(&provision, &composition));
+
+    esp_ble_mesh_provisioner_set_dev_uuid_match(NULL, 0, 0, false);
+
     ESP_ERROR_CHECK(esp_ble_mesh_provisioner_prov_enable(
         ESP_BLE_MESH_PROV_ADV | ESP_BLE_MESH_PROV_GATT));
 
@@ -375,6 +403,9 @@ static esp_err_t ble_mesh_init(void)
 
     esp_ble_mesh_provisioner_add_local_net_key(net_key, net_key_idx);
     esp_ble_mesh_provisioner_add_local_app_key(app_key, net_key_idx, app_key_idx);
+    //Bind AppKey cho Sensor Client model trên Gateway
+    esp_ble_mesh_provisioner_bind_app_key_to_local_model(0x0001, app_key_idx,
+        ESP_BLE_MESH_MODEL_ID_SENSOR_CLI, ESP_BLE_MESH_CID_NVAL);
 
     ESP_LOGI(TAG, "Gateway initialized, scanning for nodes...");
     return ESP_OK;
