@@ -118,3 +118,14 @@ void mq135_calibrate(float t, float h)
 
     ESP_LOGI(TAG, "Calibration done! Ro = %.2f kOhm", Ro);
 }
+
+float get_voltage(void)
+{
+    uint32_t adc_reading = 0;
+    for (int i = 0; i < 10; i++) {
+        adc_reading += adc1_get_raw(MQ135_ADC_CHANNEL);
+    }
+    adc_reading /= 10;
+    uint32_t voltage_mv = esp_adc_cal_raw_to_voltage(adc_reading, &adc_chars);
+    return voltage_mv / 1000.0f;
+}

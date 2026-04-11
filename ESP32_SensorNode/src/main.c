@@ -24,7 +24,9 @@
 #define SENSOR_TEMP_PROPERTY_ID     0x004F
 #define SENSOR_HUM_PROPERTY_ID      0x0052
 #define SENSOR_CO2_PROPERTY_ID      0x0060
-#define SENSOR_COUNT                3
+#define SENSOR_COUNT                5
+#define SENSOR_MCU_PROPERTY_ID      0x0069
+#define SENSOR_VOLT_PROPERTY_ID     0x006A
 
 #define SENSOR_POSITIVE_TOLERANCE   ESP_BLE_MESH_SENSOR_UNSPECIFIED_POS_TOLERANCE
 #define SENSOR_NEGATIVE_TOLERANCE   ESP_BLE_MESH_SENSOR_UNSPECIFIED_NEG_TOLERANCE
@@ -37,6 +39,8 @@ static uint8_t dev_uuid[ESP_BLE_MESH_OCTET16_LEN] = { 0x32, 0x10 };
 NET_BUF_SIMPLE_DEFINE_STATIC(sensor_data_temp, 2);
 NET_BUF_SIMPLE_DEFINE_STATIC(sensor_data_hum,  2);
 NET_BUF_SIMPLE_DEFINE_STATIC(sensor_data_co2,  2);
+NET_BUF_SIMPLE_DEFINE_STATIC(sensor_data_mcu,  2);
+NET_BUF_SIMPLE_DEFINE_STATIC(sensor_data_volt, 2);
 
 static esp_ble_mesh_sensor_state_t sensor_states[SENSOR_COUNT] = {
     [0] = {
@@ -82,6 +86,36 @@ static esp_ble_mesh_sensor_state_t sensor_states[SENSOR_COUNT] = {
             .format    = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
             .length    = 2,
             .raw_value = &sensor_data_co2,
+        },
+    },
+    [3] = {
+        .sensor_property_id = SENSOR_MCU_PROPERTY_ID,
+        .descriptor = {
+            .positive_tolerance = SENSOR_POSITIVE_TOLERANCE,
+            .negative_tolerance = SENSOR_NEGATIVE_TOLERANCE,
+            .sampling_function  = SENSOR_SAMPLE_FUNCTION,
+            .measure_period     = SENSOR_MEASURE_PERIOD,
+            .update_interval    = SENSOR_UPDATE_INTERVAL,
+        },
+        .sensor_data = {
+            .format    = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
+            .length    = 2,
+            .raw_value = &sensor_data_mcu,
+        },
+    },
+    [4] = {
+        .sensor_property_id = SENSOR_VOLT_PROPERTY_ID,
+        .descriptor = {
+            .positive_tolerance = SENSOR_POSITIVE_TOLERANCE,
+            .negative_tolerance = SENSOR_NEGATIVE_TOLERANCE,
+            .sampling_function  = SENSOR_SAMPLE_FUNCTION,
+            .measure_period     = SENSOR_MEASURE_PERIOD,
+            .update_interval    = SENSOR_UPDATE_INTERVAL,
+        },
+        .sensor_data = {
+            .format    = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
+            .length    = 2,
+            .raw_value = &sensor_data_volt,
         },
     },
 };
@@ -147,7 +181,7 @@ static esp_ble_mesh_prov_t provision = {
     .uuid = dev_uuid,
 };
 
-#define SENSOR_STATUS_BUF_LEN   16
+#define SENSOR_STATUS_BUF_LEN   24
 
 static uint16_t build_sensor_status(uint8_t *buf, uint16_t buf_len)
 {
@@ -175,13 +209,13 @@ static void update_sensor_values(void)
     float h   = get_hum();
     float co2 = get_co2_ppm();
     float mcu = get_mcu_temp();
+    float volt = get_voltage();
 
-    // Encode temp: nhân 100 để giữ 2 số thập phân, dùng 2 bytes
     uint16_t temp_raw = (uint16_t)((t + 64.0f) * 100.0f);
-    // Encode hum: nhân 100, dùng 2 bytes
     uint16_t hum_raw  = (uint16_t)(h * 100.0f);
-    // CO2: giữ nguyên uint16
     uint16_t co2_raw  = (uint16_t)co2;
+    uint16_t mcu_raw  = (uint16_t)(mcu * 100.0f);
+    uint16_t volt_raw = (uint16_t)(volt * 1000.0f);
 
     net_buf_simple_reset(&sensor_data_temp);
     net_buf_simple_add_le16(&sensor_data_temp, temp_raw);
@@ -192,11 +226,18 @@ static void update_sensor_values(void)
     net_buf_simple_reset(&sensor_data_co2);
     net_buf_simple_add_le16(&sensor_data_co2, co2_raw);
 
+    net_buf_simple_reset(&sensor_data_mcu);
+    net_buf_simple_add_le16(&sensor_data_mcu, mcu_raw);
+
+    net_buf_simple_reset(&sensor_data_volt);
+    net_buf_simple_add_le16(&sensor_data_volt, volt_raw);
+
     ESP_LOGI(TAG, "========================================");
-    ESP_LOGI(TAG, "  Temp      : %.2f C (raw=%d)", t, temp_raw);
-    ESP_LOGI(TAG, "  Humidity  : %.2f %% (raw=%d)", h, hum_raw);
-    ESP_LOGI(TAG, "  CO2/VOC   : %.2f ppm (raw=%d)", co2, co2_raw);
+    ESP_LOGI(TAG, "  Temp      : %.2f C", t);
+    ESP_LOGI(TAG, "  Humidity  : %.2f %%", h);
+    ESP_LOGI(TAG, "  CO2/VOC   : %.2f ppm", co2);
     ESP_LOGI(TAG, "  MCU Temp  : %.2f C", mcu);
+    ESP_LOGI(TAG, "  Voltage   : %.2f V", volt);
     ESP_LOGI(TAG, "========================================");
 }
 

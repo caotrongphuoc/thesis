@@ -30,6 +30,7 @@ float get_hum(void);
 float get_mcu_temp(void);
 float get_rs_avg(void);
 float get_co2_ppm(void);
+float get_voltage(void);
 void mq135_calibrate(float t, float h);
 
 #ifdef __cplusplus
